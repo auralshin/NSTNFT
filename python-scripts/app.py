@@ -4,6 +4,7 @@ import numpy as np
 from flask import request
 import tensorflow as tf
 import tensorflow_hub as hub
+import base64
 
 app = Flask(__name__)
 
@@ -23,9 +24,10 @@ def nstModelWaves():
     # stylized_image = outputs[0]
     return "content"
 
-@app.route('/product/<name>')
-def get_product(name):
-    content_image = plt.imread(name)
+@app.route('/product')
+def get_product():
+    name = request.args.get('name')
+    content_image = plt.imread(name, format='jpeg')
     style_image = plt.imread("https://upload.wikimedia.org/wikipedia/commons/0/0a/The_Great_Wave_off_Kanagawa.jpg")
     content_image = content_image.astype(np.float32)[np.newaxis, ...] / 255.
     style_image = style_image.astype(np.float32)[np.newaxis, ...] / 255.
@@ -36,7 +38,8 @@ def get_product(name):
     # Stylize image.
     outputs = hub_module(tf.constant(content_image), tf.constant(style_image))
     stylized_image = outputs[0]
-    return "The product is " + str(name)
+    data = base64.b64encode(stylized_image)
+    return "The product is " + str(name) + data
 
 if __name__ == '__name__':
     app.run(debug=True)
